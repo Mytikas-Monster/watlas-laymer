@@ -33,7 +33,7 @@ const paths={
 };
 function icon(name,size=16){return `<svg class="ico" aria-hidden="true" viewBox="0 0 24 24" width="${Number(size)||16}" height="${Number(size)||16}" fill="none" stroke="currentColor" stroke-width="1.6">${paths[name]||paths.compass}</svg>`;}
 function icons(){document.querySelectorAll('i[data-icon]').forEach(el=>el.outerHTML=icon(el.dataset.icon,el.dataset.size||14));}
-const nav=[['checkpoint','Checkpoint','flag'],['overview','Overview','overview'],['routes','Route planner','map'],['dungeons','Dungeons','dungeon'],['journal','Session log','journal'],['research','Research','book'],['grinding','Grinding tips','swords']];
+const nav=[['checkpoint','Checkpoint','flag'],['daily-prompt','Daily Prompt','scroll'],['overview','Overview','overview'],['routes','Route planner','map'],['dungeons','Dungeons','dungeon'],['journal','Session log','journal'],['research','Research','book'],['grinding','Grinding tips','swords']];
 const key='warrior-atlas:laymer:dashboard:v1';
 function read(){try{return JSON.parse(localStorage.getItem(key))||{};}catch{return {};}}
 function save(update){try{localStorage.setItem(key,JSON.stringify({...read(),...update}));return true;}catch{notice('Browser storage is unavailable.');return false;}}
@@ -62,7 +62,7 @@ function tile(r){
  return `<button type="button" class="route-tile" data-home-route="${r.id}">${art}<div class="tile-body"><span class="route-flag ${r.type.toLowerCase()}">${icon(({Dungeon:'dungeon',Questing:'scroll',Grinding:'swords'})[r.type],12)}${r.type}</span><h3>${titles[r.id]||r.title}</h3><p class="tile-text">${desc[r.id]||r.description}</p><div class="tile-foot"><span>${icon('layers',12)} Lv. ${r.min}–${r.max}</span>${icon('arrow-right',15)}</div></div></button>`;
 }
 function header(title,glyph,action=''){return `<div class="section-head"><div class="section-title">${icon(glyph,21)}<h2>${title}</h2></div>${action}</div>`;}
-function today(){return new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Brussels',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}
+function today(date=new Date()){return new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Brussels',year:'numeric',month:'2-digit',day:'2-digit'}).format(date);}
 function checklist(s){
  const r=selectedRoute();
  if(s.level===60)return [['Review the last session','Compare elapsed XP/hour with your earlier runs.'],['Record your final kit','Save your wallet and equipped weapon.'],['Export your session history','Download your results from the session log.']];
@@ -104,6 +104,7 @@ function render(scroll=false){
  document.title=title+' · Warrior Atlas';$('#crumb').textContent=title;
  $('#nav').innerHTML=nav.map(([slug,t,g])=>`<a href="#${slug}" ${p===slug?'aria-current="page"':''}>${icon(g,15)}${t}</a>`).join('');
  if(p==='checkpoint')Checkpoint.render($('#view'),read,save);
+ else if(p==='daily-prompt')DailyPrompt.render($('#view'),today,refreshDate);
  else if(p==='overview')dashboard();
  else if(p==='routes')Routes.render($('#view'));
  else if(p==='grinding')Grinding.render($('#view'));
@@ -117,6 +118,14 @@ $('#dialog').addEventListener('click',e=>{if(e.target===e.currentTarget){const b
 document.addEventListener('click',e=>{const a=e.target.closest('[data-action]'),r=e.target.closest('[data-home-route]');if(a)action(a.dataset.action);else if(r)Routes.detail(r.dataset.homeRoute);});
 window.addEventListener('hashchange',()=>{closeModal();render(true);});
 window.addEventListener('atlas-update',()=>render());window.addEventListener('storage',()=>{if(!$('#dialog').open)render();});
-const d=new Date();$('#dateline').dateTime=today();$('#dateline').textContent=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Brussels',weekday:'short',day:'2-digit',month:'short',year:'numeric'}).format(d);
-icons();render();
+function refreshDate(){
+ const d=new Date(), dateline=$('#dateline'), day=today(d);
+ if(dateline.dateTime!==day){
+  dateline.dateTime=day;
+  dateline.textContent=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Brussels',weekday:'short',day:'2-digit',month:'short',year:'numeric'}).format(d);
+ }
+ return day;
+}
+window.addEventListener('focus',refreshDate);
+refreshDate();icons();render();
 })();

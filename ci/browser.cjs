@@ -130,6 +130,7 @@ async function verify(page, root) {
     page.on('response', response => {if (response.status() >= 400) errors.push(response.url());});
     await verifyTheme(page, process.argv[2]);
     await verify(page, process.argv[2]);
+    await require("./daily-prompt.cjs")(page, process.argv[2]);
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();

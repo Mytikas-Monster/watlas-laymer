@@ -375,6 +375,14 @@
     if (ranked.length<2 || gainRate(ranked[0])<=gainRate(ranked[1])) return null;
     return {id:ranked[0].id,count:ranked[0].count,pace:gainRate(ranked[0]),compared:ranked.length};
   }
+  function promptContext() {
+    const {profile, profileAt, runs} = read();
+    const morning = runs.filter(run => inMorning(run.startAt) && run.ms > 0);
+    const ms = morning.reduce((sum, run) => sum + run.ms, 0);
+    const gain = morning.reduce((sum, run) => sum + run.gain, 0);
+    const latest = runs.reduce((last, run) => !last || run.endAt > last.endAt ? run : last, null);
+    return {profile, profileAt, latest, count: morning.length, pace: ms ? gain * 3600000 / ms : null};
+  }
   function fieldReport(runs) {
     if(!runs.length)return '';
     const morning=runs.filter(r=>inMorning(r.startAt));
@@ -428,5 +436,5 @@
     ({manual,start,import:importAddon,active:activeDialog,discard:confirmDiscard,delete:()=>confirmDelete(b.dataset.id),detail:()=>details(b.dataset.id),close,export:csv}[action])?.();
   });
   setInterval(()=>{document.querySelectorAll('[data-timer]').forEach(n=>{n.textContent=timerText(Number(n.dataset.timer));});},1000);
-  window.Tracker={render,start,edit,activeDialog,summary,manual,importAddon,preferredRoute};
+  window.Tracker={render,start,edit,activeDialog,summary,manual,importAddon,preferredRoute,promptContext};
 })();
